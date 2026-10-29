@@ -72,6 +72,7 @@
       <div id="saldosMsg" class="hidden"></div>
       <div style="display:flex;gap:14px;align-items:end;flex-wrap:wrap;margin-bottom:12px">
         <div><div class="muted">Fecha</div><input type="date" id="sFecha"></div>
+        <div><div class="muted">TC ($ por USD)</div><input type="text" id="sTC" placeholder="-" inputmode="decimal" style="width:110px;text-align:right;font-family:ui-monospace,Consolas,monospace"></div>
         <button id="btnGuardar">Guardar saldos</button>
         <button id="btnCopiar" style="background:#2F9E73" title="Copia la planilla como texto para pegar en el grupo de WhatsApp">📋 Copiar para WhatsApp</button>
         <span class="muted" id="sInfo"></span>
@@ -195,6 +196,7 @@
       <div class="wrap"><table class="dash" style="min-width:0"><tr><th>Fecha</th><th class="num">Total grupo $</th><th class="num">DW Galicia</th><th class="num">DW BNA</th><th class="num">BT Galicia</th><th class="num">PEG Galicia</th><th>Cargó</th><th>Hora</th></tr>
       ${lista.map(x=>{ const d=x.datos||{}; const g=(e,k)=>((d[e]||{})[k]); return `<tr style="cursor:pointer" onclick="document.getElementById('sFecha').value='${x.fecha}';document.getElementById('sFecha').dispatchEvent(new Event('change'));window.scrollTo(0,0)"><td><b>${fd(x.fecha)}</b></td><td class="num kpi">${fmt(x.total_pesos)}</td><td class="num kpi">${fmt(g('DW','galicia'))}</td><td class="num kpi">${fmt(g('DW','bna'))}</td><td class="num kpi">${fmt(g('BT','galicia'))}</td><td class="num kpi">${fmt(g('PEG','galicia'))}</td><td class="sub">${x.cargado_por||''}</td><td class="sub">${x.cargado_el?x.cargado_el.slice(11,16):''}</td></tr>`; }).join('')}</table></div>` : '';
     const V = (base && base.datos) || {};
+    $('#sTC').value = V._tc ? fmt(V._tc) : '';
     if((V.DW||{}).taperas_bna!=null && !(V.TAP||{}).bna) V.TAP={bna:V.DW.taperas_bna};
     [['DW',['usd_bna','usd_galicia']],['BT',['usd_g']]].forEach(([e,ks])=>{ const v=V[e]||{}; if(v.usd==null && ks.some(k=>k in v)) { v.usd=Math.round(ks.reduce((a,k)=>a+(v[k]||0),0)*100)/100; V[e]=v; } });
     const cell = (e,f)=>{ const k=f.celdas[e.emp]; if(!k) return '<td class="na">·</td>'; const v=(V[e.emp]||{})[k]; return `<td><input data-emp="${e.emp}" data-k="${k}" data-mon="${f.moneda}" data-dest="${f.destino||''}" value="${v?fmt(v):''}" placeholder="-" inputmode="decimal"></td>`; };
@@ -219,7 +221,8 @@
       const et = con.childNodes[0].textContent.trim();
       tr.querySelectorAll('input').forEach(i=>{ const v=num(i.value); if(!v) return; const e=i.dataset.emp; (porEmp[e] ||= []).push([porEmp._ramal, et, i.dataset.mon, v]); if(i.dataset.mon==='$'){ tot[e]=(tot[e]||0)+v; grupo+=v; } else totU[e]=(totU[e]||0)+v; });
     });
-    let out = `*SALDOS DE LA MAÑANA · ${fd(fecha)}*\n`;
+    const tc = num(document.getElementById('sTC').value);
+    let out = `*SALDOS DE LA MAÑANA · ${fd(fecha)}*` + (tc ? `  ·  TC $ ${fmt(tc)}` : '') + '\n';
     document.querySelectorAll('#planilla th.emp').forEach(th=>{
       const e = th.className.replace('emp','').trim().toUpperCase(); const filas = porEmp[e]; if(!filas) return;
       out += `\n*${th.textContent.trim().toUpperCase()}*\n`; let r0='';
@@ -242,7 +245,7 @@
     document.querySelectorAll('#planilla td[data-tot="USD"]').forEach(c=>{ c.textContent = totU[c.dataset.emp] ? fmt(totU[c.dataset.emp]) : '—'; });
     $('#sTotal').textContent = fmt(grupo); return Math.round(grupo*100)/100; }
   $('#btnGuardar').onclick = async ()=>{
-    const datos = {}; document.querySelectorAll('#planilla input').forEach(i=>{ (datos[i.dataset.emp] ||= {})[i.dataset.k] = num(i.value); });
+    const datos = {}; document.querySelectorAll('#planilla input').forEach(i=>{ (datos[i.dataset.emp] ||= {})[i.dataset.k] = num(i.value); }); datos._tc = num($('#sTC').value);
     const {data:{session}} = await sb.auth.getSession();
     const fila = {fecha:$('#sFecha').value, datos, total_pesos: total(), cargado_por: session.user.email};
     const {error} = await sb.from('saldos_diarios').upsert(fila, {onConflict:'fecha'});
