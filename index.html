@@ -63,6 +63,7 @@
       <label class="muted">Empresa</label><select id="emp"></select>
       <label class="muted">Publicación</label><select id="pub"></select>
       <span class="muted" id="pubInfo"></span>
+      <span id="genBox" class="hidden" style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button id="btnGenerar" style="background:#2F9E73" title="Le manda la orden a la PC de la oficina: genera el financiero de hoy y lo publica acá (tarda 1 a 3 minutos; el portal tiene que estar abierto en la PC)">⚡ Generar financiero</button><span class="sub" id="genInfo"></span></span>
     </div>
     <div id="dash"></div>
   </div>
@@ -113,9 +114,35 @@
     rol = (p && p.rol) || 'lector';
     $('#quien').textContent = (p && (p.nombre||p.email)) || session.user.email; $('#quien').textContent += ' · ' + rol;
     $('#nav').classList.remove('hidden'); $('#salir').classList.remove('hidden');
-    if (rol==='operadora' || rol==='admin') $('#navSaldos').classList.remove('hidden');
+    if (rol==='operadora' || rol==='admin') { $('#navSaldos').classList.remove('hidden'); $('#genBox').classList.remove('hidden'); }
     show('vDash'); await cargarDash();
   }
+
+  // ---------------- «Generar financiero»: orden que baja a la PC ----------------
+  let genTimer = null;
+  $('#btnGenerar').onclick = async ()=>{
+    const b = $('#btnGenerar'), info = $('#genInfo');
+    const {data:{session}} = await sb.auth.getSession();
+    const {data:pend} = await sb.from('ordenes').select('id,estado,pedido_el').eq('emp', empSel.value).in('estado',['pendiente','en_curso']).order('pedido_el',{ascending:false}).limit(1);
+    let oid;
+    if (pend && pend.length && (Date.now() - new Date(pend[0].pedido_el).getTime()) < 15*60*1000) { oid = pend[0].id; info.textContent = 'Ya hay una orden en curso, esperando…'; }
+    else {
+      const {data,error} = await sb.from('ordenes').insert({emp: empSel.value, tipo:'generar', pedido_por: session.user.email}).select('id').single();
+      if (error) { info.textContent = 'No se pudo pedir: ' + error.message + (error.message.includes('ordenes') ? ' (falta crear la tabla «ordenes» en Supabase)' : ''); return; }
+      oid = data.id; info.textContent = 'Orden enviada a la PC… esperando que la tome';
+    }
+    b.disabled = true; const t0 = Date.now();
+    clearInterval(genTimer);
+    genTimer = setInterval(async ()=>{
+      const {data:o} = await sb.from('ordenes').select('estado,resultado').eq('id', oid).single();
+      const seg = Math.round((Date.now()-t0)/1000);
+      if (!o) return;
+      if (o.estado === 'pendiente') info.textContent = `Esperando que la PC tome la orden (${seg} s)… el portal tiene que estar abierto en la oficina.`;
+      else if (o.estado === 'en_curso') info.textContent = `Generando en la PC (${seg} s)…`;
+      else { clearInterval(genTimer); b.disabled = false; info.textContent = (o.estado === 'hecho' ? '✓ Publicado: ' : '✗ Error: ') + (o.resultado||''); if (o.estado === 'hecho') cargarDash(); }
+      if (seg > 600) { clearInterval(genTimer); b.disabled = false; info.textContent = 'Sin respuesta de la PC en 10 minutos: ¿está prendida y con el portal abierto?'; }
+    }, 5000);
+  };
 
   // ---------------- dashboard ----------------
   const empSel = $('#emp'), pubSel = $('#pub');
