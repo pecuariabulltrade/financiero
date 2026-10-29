@@ -1,0 +1,218 @@
+[
+ {
+  "emp": "PEG",
+  "titulo": "Pecuaria",
+  "campos": [
+   [
+    "bna",
+    "BNA",
+    "$",
+    "Banco Nación"
+   ],
+   [
+    "cba",
+    "CBA",
+    "$",
+    "Banco Córdoba"
+   ],
+   [
+    "lapampa",
+    "La Pampa",
+    "$",
+    "Banco La Pampa"
+   ],
+   [
+    "galicia",
+    "Galicia",
+    "$",
+    "Banco Galicia"
+   ],
+   [
+    "fima",
+    "FIMA Galicia",
+    "$",
+    "FIMA Galicia"
+   ],
+   [
+    "usd",
+    "Dólares",
+    "USD",
+    "usd"
+   ],
+   [
+    "macro",
+    "Macro",
+    "$",
+    "Banco Macro"
+   ]
+  ]
+ },
+ {
+  "emp": "BT",
+  "titulo": "Bulltrade",
+  "campos": [
+   [
+    "bna",
+    "BNA",
+    "$",
+    "Banco Nación"
+   ],
+   [
+    "cba",
+    "CBA",
+    "$",
+    "Banco Córdoba"
+   ],
+   [
+    "lapampa",
+    "La Pampa",
+    "$",
+    "Banco La Pampa"
+   ],
+   [
+    "galicia",
+    "Galicia",
+    "$",
+    "Banco Galicia"
+   ],
+   [
+    "fima",
+    "FIMA Galicia",
+    "$",
+    "FIMA Galicia"
+   ],
+   [
+    "usd_g",
+    "Dólares G",
+    "USD",
+    "usd"
+   ],
+   [
+    "usd_fima",
+    "Dólares G Fima",
+    "USD",
+    "usd"
+   ],
+   [
+    "macro",
+    "Macro",
+    "$",
+    "Banco Macro"
+   ],
+   [
+    "bursatil",
+    "Becerra Bursátil $",
+    "$",
+    "Bursátil"
+   ],
+   [
+    "bursatil_usd",
+    "Becerra Bursátil USD",
+    "USD",
+    "usd"
+   ]
+  ]
+ },
+ {
+  "emp": "DW",
+  "titulo": "Darwash SA",
+  "campos": [
+   [
+    "bna",
+    "BNA",
+    "$",
+    "Banco Nación"
+   ],
+   [
+    "cba",
+    "Cba",
+    "$",
+    "Banco Córdoba"
+   ],
+   [
+    "lapampa",
+    "La Pampa",
+    "$",
+    "Banco La Pampa"
+   ],
+   [
+    "galicia",
+    "Galicia",
+    "$",
+    "Banco Galicia"
+   ],
+   [
+    "fima",
+    "FIMA",
+    "$",
+    "FIMA Galicia"
+   ],
+   [
+    "macro",
+    "Macro",
+    "$",
+    "Banco Macro"
+   ],
+   [
+    "usd_bna",
+    "Dólares BNA",
+    "USD",
+    "usd"
+   ],
+   [
+    "usd_galicia",
+    "Dólares Galicia",
+    "USD",
+    "usd"
+   ],
+   [
+    "taperas_bna",
+    "Las Taperas BNA",
+    "$",
+    "Banco Las Taperas del Oeste"
+   ],
+   [
+    "bursatil",
+    "Becerra Bursátil $",
+    "$",
+    "Bursátil"
+   ],
+   [
+    "bursatil_usd",
+    "Becerra Bursátil USD",
+    "USD",
+    "usd"
+   ],
+   [
+    "tarjeta",
+    "Tarjeta por cobrar DW",
+    "$",
+    "extra"
+   ]
+  ]
+ },
+ {
+  "emp": "UN",
+  "titulo": "Darwash - Silvio Fernández UT",
+  "campos": [
+   [
+    "galicia",
+    "Galicia",
+    "$",
+    "Banco Galicia"
+   ],
+   [
+    "fima",
+    "Fima",
+    "$",
+    "FIMA Galicia"
+   ],
+   [
+    "macro",
+    "Macro",
+    "$",
+    "Banco Macro"
+   ]
+  ]
+ }
+]
