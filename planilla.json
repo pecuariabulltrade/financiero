@@ -29,7 +29,8 @@
       "PEG": "bna",
       "BT": "bna",
       "DW": "bna"
-     }
+     },
+     "clase": ""
     },
     {
      "etiqueta": "Bco. Nación · Las Taperas",
@@ -37,7 +38,8 @@
      "destino": "Banco Las Taperas del Oeste",
      "celdas": {
       "DW": "taperas_bna"
-     }
+     },
+     "clase": ""
     },
     {
      "etiqueta": "Bco. Provincia Cba",
@@ -47,7 +49,8 @@
       "PEG": "cba",
       "BT": "cba",
       "DW": "cba"
-     }
+     },
+     "clase": ""
     },
     {
      "etiqueta": "Bco. La Pampa",
@@ -57,7 +60,8 @@
       "PEG": "lapampa",
       "BT": "lapampa",
       "DW": "lapampa"
-     }
+     },
+     "clase": ""
     },
     {
      "etiqueta": "Bco. Galicia",
@@ -68,7 +72,8 @@
       "BT": "galicia",
       "DW": "galicia",
       "UN": "galicia"
-     }
+     },
+     "clase": ""
     },
     {
      "etiqueta": "Bco. Macro",
@@ -79,7 +84,17 @@
       "BT": "macro",
       "DW": "macro",
       "UN": "macro"
-     }
+     },
+     "clase": ""
+    },
+    {
+     "etiqueta": "Tarjeta por cobrar",
+     "moneda": "$",
+     "destino": "Tarjeta por cobrar",
+     "celdas": {
+      "DW": "tarjeta"
+     },
+     "clase": "tarjeta"
     }
    ]
   },
@@ -95,7 +110,8 @@
       "BT": "fima",
       "DW": "fima",
       "UN": "fima"
-     }
+     },
+     "clase": ""
     },
     {
      "etiqueta": "FIMA U$S (Galicia)",
@@ -103,7 +119,8 @@
      "destino": "usd",
      "celdas": {
       "BT": "usd_fima"
-     }
+     },
+     "clase": ""
     },
     {
      "etiqueta": "Becerra Bursátil Pesos",
@@ -112,7 +129,8 @@
      "celdas": {
       "BT": "bursatil",
       "DW": "bursatil"
-     }
+     },
+     "clase": ""
     },
     {
      "etiqueta": "Becerra Bursátil USD",
@@ -121,7 +139,8 @@
      "celdas": {
       "BT": "bursatil_usd",
       "DW": "bursatil_usd"
-     }
+     },
+     "clase": ""
     }
    ]
   },
@@ -134,7 +153,8 @@
      "destino": "usd",
      "celdas": {
       "DW": "usd_bna"
-     }
+     },
+     "clase": ""
     },
     {
      "etiqueta": "Dólares Cta/Cte Galicia",
@@ -143,7 +163,8 @@
      "celdas": {
       "BT": "usd_g",
       "DW": "usd_galicia"
-     }
+     },
+     "clase": ""
     },
     {
      "etiqueta": "Dólares Cta/Cte",
@@ -151,20 +172,8 @@
      "destino": "usd",
      "celdas": {
       "PEG": "usd"
-     }
-    }
-   ]
-  },
-  {
-   "nombre": "Otros",
-   "filas": [
-    {
-     "etiqueta": "Tarjeta por cobrar DW",
-     "moneda": "$",
-     "destino": "extra",
-     "celdas": {
-      "DW": "tarjeta"
-     }
+     },
+     "clase": ""
     }
    ]
   }
