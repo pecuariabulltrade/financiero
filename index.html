@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<title>Financiero · Grupo</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="config.js"></script>
+<style>
+  :root{--bg:#F7F8FA;--surface:#FFF;--surface-2:#EEF1F5;--border:#E1E5EA;--border-2:#C9D0D8;--ink:#161B22;--text-2:#3F4854;--mutedc:#7B8794;
+    --accent:#1F4E8C;--accent-bright:#2F7BD6;--accent-soft:#E7F0FB;--verde:#1E8E5A;--ambar:#B8881F;--ambar-soft:#F7F1E2;--rojo:#C0392B}
+  *{box-sizing:border-box} html,body{overflow-x:hidden} body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  header{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:5;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  header h1{margin:0;font-size:18px} header h1 span{color:var(--accent)} .muted{color:var(--mutedc);font-size:12px}
+  nav a{font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-2);text-decoration:none;padding:5px 10px;border-radius:7px;cursor:pointer}
+  nav a.on,nav a:hover{color:var(--accent);background:var(--accent-soft)}
+  main{padding:12px 10px 30px;max-width:1800px;margin:0 auto}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 12px;margin-bottom:14px} .card h2{font-size:16px;margin:0 0 10px}
+  .sub{font-size:11px;color:var(--text-2)} code{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:var(--surface-2);padding:1px 4px;border-radius:4px}
+  .num,.kpi{text-align:right;font-family:ui-monospace,"JetBrains Mono",Consolas,monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .deu{color:var(--verde)} .acr{color:var(--rojo)}
+  input,select,button{height:36px;border:1px solid var(--border-2);border-radius:7px;background:var(--surface);padding:0 10px;font:400 14px inherit;color:var(--ink)}
+  button{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500;cursor:pointer} button:hover{background:var(--accent-bright)}
+  .login{max-width:360px;margin:60px auto} .login input{width:100%;margin:6px 0 12px} .login button{width:100%}
+  .err{background:#FBEBE8;color:var(--rojo);border-radius:6px;padding:8px 10px;margin:8px 0;font-size:13px} .ok{background:var(--accent-soft);border-radius:6px;padding:8px 10px;margin:8px 0;font-size:13px}
+  .hero{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;align-items:center} .hero .big{font-size:38px;font-weight:700;line-height:1.1}
+  .comp table{border-collapse:collapse} .comp td{padding:5px 8px;border-bottom:1px solid var(--border);font-size:14px} .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle}
+  .wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;touch-action:pan-x pan-y}
+  table.dash{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:14px}
+  table.dash th,table.dash td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;white-space:nowrap}
+  table.dash th{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mutedc);position:sticky;top:0;background:var(--surface);z-index:2}
+  table.dash th:first-child,table.dash td:first-child{position:sticky;left:0;background:var(--surface);z-index:1;min-width:220px}
+  table.dash td.sem,table.dash th.sem{background:var(--surface-2);font-size:13px}
+  table.dash tr.fila td{border-top:2px solid var(--border-2);background:var(--surface-2);font-weight:600;cursor:pointer} table.dash tr.fila td:first-child b{color:var(--accent);font-size:15px}
+  table.dash tr.cat-ing td:first-child{border-left:5px solid var(--verde)} table.dash tr.cat-egr td:first-child{border-left:5px solid var(--rojo)} table.dash tr.cat-disp td:first-child{border-left:5px solid var(--accent)} table.dash tr.cat-mix td:first-child{border-left:5px solid var(--ambar)}
+  table.dash tr.det td{font-size:13px} table.dash tr.det td:first-child{padding-left:26px}
+  table.dash tr.tot td{border-top:3px double var(--border-2);font-size:16px;font-weight:700} table.dash tr.acum td{background:var(--accent-soft);font-size:17px;font-weight:700}
+  td.sem.neg{color:var(--rojo)} td.sem.pos{color:var(--verde)}
+  .blk{margin:0 0 14px} .blk h3{margin:0 0 6px;font-size:14px;padding:6px 10px;border-radius:6px 6px 0 0} .blk table{border-collapse:collapse} .blk th{font-size:11px;white-space:nowrap;padding:4px 6px;color:var(--mutedc)} .blk td{padding:4px 6px} .blk td input{width:150px;text-align:right;font-family:ui-monospace,Consolas,monospace}
+  .peg h3{background:#E7F0FB} .bt h3{background:#E6F4EC} .dw h3{background:#EEF1F5} .un h3{background:#FBEBE0}
+  .hidden{display:none}
+  @media (max-width:800px){.hero{grid-template-columns:1fr}.hero .big{font-size:32px}main{padding:8px 6px}.card{padding:10px 6px}table.dash{font-size:13px}table.dash th,table.dash td{padding:7px}
+    table.dash th:first-child,table.dash td:first-child{min-width:150px;max-width:170px;white-space:normal;box-shadow:2px 0 0 var(--border)}table.dash tr.tot td,table.dash tr.acum td{font-size:14px}.blk table{display:block;overflow-x:auto}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Portal <span>Financiero</span></h1>
+  <nav id="nav" class="hidden"><a data-v="dashboard" class="on">Dashboard</a><a data-v="saldos" id="navSaldos" class="hidden">Saldos de la mañana</a></nav>
+  <span class="muted" id="quien" style="margin-left:auto"></span><a id="salir" class="muted hidden" style="cursor:pointer">salir</a>
+</header>
+<main>
+  <div id="vLogin" class="card login">
+    <h2>Ingresar</h2>
+    <div id="loginErr" class="err hidden"></div>
+    <label class="muted">Email</label><input id="email" type="email" autocomplete="username">
+    <label class="muted">Contraseña</label><input id="pass" type="password" autocomplete="current-password">
+    <button id="btnLogin">Entrar</button>
+  </div>
+  <div id="vDash" class="hidden">
+    <div class="card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <label class="muted">Empresa</label><select id="emp"></select>
+      <label class="muted">Publicación</label><select id="pub"></select>
+      <span class="muted" id="pubInfo"></span>
+    </div>
+    <div id="dash"></div>
+  </div>
+  <div id="vSaldos" class="hidden">
+    <div class="card">
+      <h2>Saldos de la mañana <span class="muted">· negativo = descubierto · USD en dólares</span></h2>
+      <div id="saldosMsg" class="hidden"></div>
+      <div style="display:flex;gap:14px;align-items:end;flex-wrap:wrap;margin-bottom:12px">
+        <div><div class="muted">Fecha</div><input type="date" id="sFecha"></div>
+        <button id="btnGuardar">Guardar saldos</button>
+        <span class="muted" id="sInfo"></span>
+        <div style="margin-left:auto"><div class="muted">Total grupo (pesos)</div><div class="kpi" id="sTotal" style="font-size:18px;font-weight:700"></div></div>
+      </div>
+      <div id="planilla"></div>
+      <div class="sub" id="sFechas"></div>
+    </div>
+  </div>
+</main>
+<script>
+(async function(){
+  const C = window.FIN_CONFIG;
+  const $ = s => document.querySelector(s);
+  const fmt = v => (v==null) ? '—' : new Intl.NumberFormat('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v);
+  const fmt0 = v => new Intl.NumberFormat('es-AR',{maximumFractionDigits:0}).format(v);
+  const fd = s => s ? `${s.slice(8,10)}/${s.slice(5,7)}/${s.slice(0,4)}` : '';
+  const num = t => { t=String(t==null?'':t).replace('$','').replace(/\s/g,'').trim(); if(!t) return 0; if(t.includes(',')) t=t.replace(/\./g,'').replace(',','.'); else if((t.match(/\./g)||[]).length>1 || (t.includes('.') && t.split('.')[1].length===3)) t=t.replace(/\./g,''); const v=parseFloat(t); return isNaN(v)?0:Math.round(v*100)/100; };
+  if (!C.SUPABASE_URL) { $('#loginErr').textContent='Falta configurar SUPABASE_URL en config.js'; $('#loginErr').classList.remove('hidden'); return; }
+  const sb = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY);
+  let rol = 'lector', PL = null, charts = [];
+
+  function show(v){ ['vLogin','vDash','vSaldos'].forEach(x=>$('#'+x).classList.add('hidden')); $('#'+v).classList.remove('hidden'); document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on', a.dataset.v===v.slice(1).toLowerCase())); }
+  document.querySelectorAll('#nav a').forEach(a=>a.onclick=()=>{ if(a.dataset.v==='dashboard') show('vDash'); else { show('vSaldos'); cargarSaldos(); } });
+
+  async function entrar(){
+    const {data,error} = await sb.auth.signInWithPassword({email:$('#email').value.trim(), password:$('#pass').value});
+    if (error) { $('#loginErr').textContent='No se pudo entrar: '+error.message; $('#loginErr').classList.remove('hidden'); return; }
+    await sesion();
+  }
+  $('#btnLogin').onclick = entrar; $('#pass').addEventListener('keydown', e=>{ if(e.key==='Enter') entrar(); });
+  $('#salir').onclick = async ()=>{ await sb.auth.signOut(); location.reload(); };
+
+  async function sesion(){
+    const {data:{session}} = await sb.auth.getSession();
+    if (!session) { show('vLogin'); return; }
+    const {data:p} = await sb.from('perfiles').select('rol,nombre,email').eq('id', session.user.id).maybeSingle();
+    rol = (p && p.rol) || 'lector';
+    $('#quien').textContent = (p && (p.nombre||p.email)) || session.user.email; $('#quien').textContent += ' · ' + rol;
+    $('#nav').classList.remove('hidden'); $('#salir').classList.remove('hidden');
+    if (rol==='operadora' || rol==='admin') $('#navSaldos').classList.remove('hidden');
+    show('vDash'); await cargarDash();
+  }
+
+  // ---------------- dashboard ----------------
+  const empSel = $('#emp'), pubSel = $('#pub');
+  Object.entries(C.EMPRESAS).forEach(([k,v])=>{ const o=document.createElement('option'); o.value=k; o.textContent=v; empSel.appendChild(o); });
+  empSel.onchange = cargarDash; pubSel.onchange = ()=>mostrar(pubSel.value);
+  let pubs = [];
+  async function cargarDash(){
+    $('#dash').innerHTML = '<div class="card muted">Cargando…</div>';
+    const {data,error} = await sb.from('financiero_publicado').select('id,corte,publicado_el,nota,activo_corriente,cola').eq('emp', empSel.value).order('publicado_el',{ascending:false}).limit(30);
+    if (error) { $('#dash').innerHTML = '<div class="err">'+error.message+'</div>'; return; }
+    pubs = data||[]; pubSel.innerHTML='';
+    if (!pubs.length) { $('#dash').innerHTML='<div class="card muted">Todavía no hay financiero publicado para esta empresa.</div>'; $('#pubInfo').textContent=''; return; }
+    pubs.forEach(p=>{ const o=document.createElement('option'); o.value=p.id; o.textContent = fd(p.publicado_el.slice(0,10))+' '+p.publicado_el.slice(11,16)+(p.nota?' · '+p.nota:''); pubSel.appendChild(o); });
+    await mostrar(pubs[0].id);
+  }
+  async function mostrar(id){
+    const {data,error} = await sb.from('financiero_publicado').select('*').eq('id', id).single();
+    if (error) { $('#dash').innerHTML='<div class="err">'+error.message+'</div>'; return; }
+    const DB = data.datos.DB, SEM = data.datos.semanas||[];
+    $('#pubInfo').textContent = 'corte '+fd(DB.corte)+' · publicado '+fd(data.publicado_el.slice(0,10))+' '+data.publicado_el.slice(11,16);
+    render(DB, SEM);
+  }
+  function cls(v){ return v<0?'acr':'deu'; }
+  function render(DB, SEM){
+    charts.forEach(c=>c.destroy()); charts=[];
+    const A = DB.activo, comp = DB.comp||{};
+    const cats = ['cat-disp','cat-egr','cat-ing','cat-ing','cat-egr','cat-mix','cat-egr','cat-mix'];
+    let h = `<div class="card" style="border:2px solid var(--accent)"><div class="hero"><div>
+      <div class="muted" style="text-transform:uppercase;letter-spacing:1px">Activo corriente · corte ${fd(DB.corte)}</div>
+      <div class="big kpi ${cls(A.total)}" style="text-align:left">${fmt(A.total)}</div>
+      <div style="margin-top:6px">${comp.valor!=null ? `Hace 30 días (${fd(comp.fecha)}): <b class="kpi">${fmt(comp.valor)}</b> · <b class="kpi ${cls(comp.dif)}">${comp.dif>=0?'▲':'▼'} ${fmt(Math.abs(comp.dif))}${comp.pct!=null?' ('+(comp.pct>=0?'+':'')+comp.pct+' %)':''}</b>` : '<span class="muted">sin foto de hace 30 días todavía</span>'}</div>
+      <div class="comp" style="margin-top:10px"><table>
+        <tr><td><span class="dot" style="background:#1F4E8C"></span>Cola del financiero</td><td class="kpi">${fmt(A.cola)}</td></tr>
+        <tr><td><span class="dot" style="background:#2F9E73"></span>Dólares USD ${fmt0(A.usd)} × ${fmt(A.tc)}</td><td class="kpi">${fmt(A.usd_pesos)}</td></tr>
+        <tr><td><span class="dot" style="background:#B8881F"></span>Cuenta ${A.cuenta_adelantos} adelantos</td><td class="kpi">${fmt(A.saldo_adelantos)}</td></tr>
+        <tr><td><span class="dot" style="background:#C0392B"></span>Hacienda ${fmt0(A.kg_total)} kg × $ ${fmt(A.precio_kg)}</td><td class="kpi">${fmt(A.hacienda)}</td></tr>
+        ${(A.extras||[]).map(e=>`<tr><td><span class="dot" style="background:#7B8794"></span>${e.detalle}</td><td class="kpi">${fmt(e.monto)}</td></tr>`).join('')}
+        <tr><td><b>Activo corriente</b></td><td class="kpi"><b>${fmt(A.total)}</b></td></tr></table></div></div>
+      <div><canvas id="torta" style="max-height:300px"></canvas></div></div></div>`;
+    h += `<div class="card"><h2>Saldo acumulado por semana <span class="sub">· tocá una columna para el día a día, una fila para el detalle</span></h2><div class="wrap"><table class="dash">
+      <tr><th>Concepto</th><th class="num">Total</th>${DB.cols.map((c,i)=>`<th class="num sem"><a onclick="abrirSemana(${i})" style="color:var(--accent);cursor:pointer">${c} ▸</a></th>`).join('')}</tr>`;
+    DB.filas.forEach((fl,k)=>{
+      h += `<tr class="fila ${cats[k]||'cat-mix'}" onclick="document.querySelectorAll('tr.d${k}').forEach(r=>r.style.display=r.style.display==='none'?'':'none')"><td><b>${fl.nombre}</b>${fl.det&&fl.det.length?` <span class="sub">${fl.n} ▸</span>`:(fl.nota?` <span class="sub">${fl.nota}</span>`:'')}</td><td class="num kpi ${cls(fl.total)}">${fmt(fl.total)}</td>${fl.vec.map(v=>`<td class="num sem kpi ${v<0?'neg':v>0?'pos':''}">${v?fmt(v):''}</td>`).join('')}</tr>`;
+      (fl.det||[]).forEach(d=>{ h += `<tr class="det d${k}" style="display:none"><td>${d.nombre}${d.codigo?' <code>'+d.codigo+'</code>':''}</td><td class="num kpi">${fmt(d.total)}</td>${d.vec.map(v=>`<td class="num sem kpi">${v?fmt(v):''}</td>`).join('')}</tr>`; });
+    });
+    const totS = DB.total.reduce((a,b)=>a+b,0);
+    h += `<tr class="tot"><td>Total semana</td><td class="num kpi">${fmt(totS)}</td>${DB.total.map(v=>`<td class="num sem kpi ${v<0?'neg':v>0?'pos':''}">${fmt(v)}</td>`).join('')}</tr>
+      <tr class="tot acum"><td>Saldo acumulado</td><td></td>${DB.acum.map(v=>`<td class="num sem kpi ${cls(v)}">${fmt(v)}</td>`).join('')}</tr></table></div></div>`;
+    SEM.forEach((W,i)=>{
+      h += `<div class="card semana" id="sem${i}" style="display:none"><h2>Día a día · ${W.titulo} <span class="sub">· <a onclick="document.getElementById('sem${i}').style.display='none'" style="cursor:pointer">cerrar</a></span></h2>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:13px;margin-bottom:8px"><div><div class="muted">Acumulado al inicio</div><b class="kpi ${cls(W.acum0)}" style="font-size:16px">${fmt(W.acum0)}</b></div><div><div class="muted">Movimiento</div><b class="kpi ${cls(W.movimiento)}" style="font-size:16px">${fmt(W.movimiento)}</b></div><div><div class="muted">Acumulado al cierre</div><b class="kpi ${cls(W.acum.length?W.acum[W.acum.length-1]:W.acum0)}" style="font-size:16px">${fmt(W.acum.length?W.acum[W.acum.length-1]:W.acum0)}</b></div></div>
+        <div class="wrap"><table class="dash"><tr><th>Concepto</th><th class="num">Total</th>${W.cols.map(c=>`<th class="num sem">${c}</th>`).join('')}</tr>`;
+      W.filas.forEach((fl,k)=>{
+        h += `<tr class="fila" onclick="document.querySelectorAll('tr.w${i}d${k}').forEach(r=>r.style.display=r.style.display==='none'?'':'none')"><td><b>${fl.nombre}</b>${fl.det&&fl.det.length?` <span class="sub">${fl.n} ▸</span>`:''}</td><td class="num kpi ${fl.total<0?'acr':fl.total>0?'deu':''}">${fmt(fl.total)}</td>${fl.vec.map(v=>`<td class="num sem kpi ${v<0?'neg':v>0?'pos':''}">${v?fmt(v):''}</td>`).join('')}</tr>`;
+        (fl.det||[]).forEach(d=>{ h += `<tr class="det w${i}d${k}" style="display:none"><td>${d.nombre}</td><td class="num kpi">${fmt(d.total)}</td>${d.vec.map(v=>`<td class="num sem kpi">${v?fmt(v):''}</td>`).join('')}</tr>`; });
+      });
+      h += `<tr class="tot"><td>Total del día</td><td class="num kpi">${fmt(W.movimiento)}</td>${W.total.map(v=>`<td class="num sem kpi ${v<0?'neg':v>0?'pos':''}">${fmt(v)}</td>`).join('')}</tr><tr class="tot acum"><td>Saldo acumulado</td><td></td>${W.acum.map(v=>`<td class="num sem kpi ${cls(v)}">${fmt(v)}</td>`).join('')}</tr></table></div></div>`;
+    });
+    h += `<div class="card"><h2>Evolución del saldo acumulado</h2><canvas id="grafico" style="max-height:340px"></canvas></div>`;
+    $('#dash').innerHTML = h;
+    window.abrirSemana = i => { document.querySelectorAll('.semana').forEach(e=>e.style.display='none'); const e=document.getElementById('sem'+i); if(e){ e.style.display=''; e.scrollIntoView({behavior:'smooth',block:'start'}); } };
+    if (typeof Chart === 'undefined') return;
+    const labels = ['Cola del financiero','Dólares','Cuenta adelantos','Hacienda'].concat(A.extras_total ? ['Otros'] : []);
+    const data = [A.cola, A.usd_pesos, A.saldo_adelantos, A.hacienda].concat(A.extras_total ? [A.extras_total] : []);
+    charts.push(new Chart($('#torta'), {type:'doughnut', data:{labels, datasets:[{data:data.map(v=>Math.max(v,0)), backgroundColor:['#1F4E8C','#2F9E73','#B8881F','#C0392B','#7B8794'], borderWidth:1}]}, options:{plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>' $ '+fmt0(data[c.dataIndex])}}},cutout:'55%'}}));
+    charts.push(new Chart($('#grafico'), {data:{labels:DB.cols, datasets:[{type:'bar',label:'Movimiento de la semana',data:DB.total,backgroundColor:DB.total.map(v=>v<0?'rgba(192,57,43,.55)':'rgba(47,158,115,.6)'),order:2},{type:'line',label:'Saldo acumulado',data:DB.acum,borderColor:'#1F4E8C',backgroundColor:'#1F4E8C',tension:.25,pointRadius:4,order:1}]}, options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{y:{ticks:{callback:v=>'$ '+fmt0(v)}}},plugins:{tooltip:{callbacks:{label:c=>' '+c.dataset.label+': $ '+fmt0(c.raw)}}}}}));
+  }
+
+  // ---------------- saldos de la mañana (operadora / admin) ----------------
+  async function cargarSaldos(){
+    if (!PL) PL = await (await fetch('planilla.json')).json();
+    const hoy = new Date(); const iso = hoy.toISOString().slice(0,10);
+    if (!$('#sFecha').value) $('#sFecha').value = iso;
+    const {data:ult} = await sb.from('saldos_diarios').select('*').order('fecha',{ascending:false}).limit(400);
+    const lista = ult||[]; const deHoy = lista.find(x=>x.fecha===$('#sFecha').value); const base = deHoy || lista[0];
+    $('#sInfo').textContent = deHoy ? `Guardado ${fd(deHoy.cargado_el.slice(0,10))} ${deHoy.cargado_el.slice(11,16)} · ${deHoy.cargado_por||''}` : (base ? `Sin carga para esta fecha: valores del ${fd(base.fecha)} como base.` : '');
+    $('#sFechas').innerHTML = lista.length ? `<h2 style="margin-top:14px">Historial <span class="sub">· un registro por día; tocá una fecha para verlo o corregirlo</span></h2>
+      <div class="wrap"><table class="dash" style="min-width:0"><tr><th>Fecha</th><th class="num">Total grupo $</th><th class="num">DW Galicia</th><th class="num">DW BNA</th><th class="num">BT Galicia</th><th class="num">PEG Galicia</th><th>Cargó</th><th>Hora</th></tr>
+      ${lista.map(x=>{ const d=x.datos||{}; const g=(e,k)=>((d[e]||{})[k]); return `<tr style="cursor:pointer" onclick="document.getElementById('sFecha').value='${x.fecha}';document.getElementById('sFecha').dispatchEvent(new Event('change'));window.scrollTo(0,0)"><td><b>${fd(x.fecha)}</b></td><td class="num kpi">${fmt(x.total_pesos)}</td><td class="num kpi">${fmt(g('DW','galicia'))}</td><td class="num kpi">${fmt(g('DW','bna'))}</td><td class="num kpi">${fmt(g('BT','galicia'))}</td><td class="num kpi">${fmt(g('PEG','galicia'))}</td><td class="sub">${x.cargado_por||''}</td><td class="sub">${x.cargado_el?x.cargado_el.slice(11,16):''}</td></tr>`; }).join('')}</table></div>` : '';
+    const V = (base && base.datos) || {};
+    let h = '';
+    PL.forEach(b=>{ h += `<div class="blk ${b.emp.toLowerCase()}"><h3>${b.titulo}</h3><table><tr>${b.campos.map(c=>`<th>${c[1]}${c[2]==='USD'?' <span class="sub">USD</span>':''}</th>`).join('')}</tr><tr>${b.campos.map(c=>{ const v=(V[b.emp]||{})[c[0]]; return `<td><input data-emp="${b.emp}" data-k="${c[0]}" data-mon="${c[2]}" data-dest="${c[3]||''}" value="${v?fmt(v):''}" placeholder="-" inputmode="decimal"></td>`; }).join('')}</tr></table></div>`; });
+    $('#planilla').innerHTML = h; total();
+    document.querySelectorAll('#planilla input').forEach(i=>i.addEventListener('input', total));
+  }
+  $('#sFecha').addEventListener('change', cargarSaldos);
+  function total(){ let t=0; document.querySelectorAll('#planilla input').forEach(i=>{ if(i.dataset.mon==='$' && i.dataset.dest!=='extra') t+=num(i.value); }); $('#sTotal').textContent = fmt(t); return t; }
+  $('#btnGuardar').onclick = async ()=>{
+    const datos = {}; document.querySelectorAll('#planilla input').forEach(i=>{ (datos[i.dataset.emp] ||= {})[i.dataset.k] = num(i.value); });
+    const {data:{session}} = await sb.auth.getSession();
+    const fila = {fecha:$('#sFecha').value, datos, total_pesos: total(), cargado_por: session.user.email};
+    const {error} = await sb.from('saldos_diarios').upsert(fila, {onConflict:'fecha'});
+    const m=$('#saldosMsg'); m.classList.remove('hidden'); m.className = error ? 'err' : 'ok'; m.textContent = error ? 'No se pudo guardar: '+error.message : 'Saldos guardados. El portal los toma al generar el financiero.';
+    if (!error) cargarSaldos();
+  };
+
+  sb.auth.onAuthStateChange((ev)=>{ if (ev==='SIGNED_OUT') show('vLogin'); });
+  await sesion();
+})();
+</script>
+</body>
+</html>
