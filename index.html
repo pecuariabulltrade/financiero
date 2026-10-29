@@ -73,6 +73,7 @@
       <div style="display:flex;gap:14px;align-items:end;flex-wrap:wrap;margin-bottom:12px">
         <div><div class="muted">Fecha</div><input type="date" id="sFecha"></div>
         <button id="btnGuardar">Guardar saldos</button>
+        <button id="btnCopiar" style="background:#2F9E73" title="Copia la planilla como texto para pegar en el grupo de WhatsApp">📋 Copiar para WhatsApp</button>
         <span class="muted" id="sInfo"></span>
         <div style="margin-left:auto"><div class="muted">Total grupo (pesos)</div><div class="kpi" id="sTotal" style="font-size:18px;font-weight:700"></div></div>
       </div>
@@ -200,13 +201,34 @@
     PL.ramales.forEach(r=>{
       h += `<tr class="ramal"><td colspan="${PL.empresas.length+1}">${r.nombre}</td></tr>`;
       r.filas.forEach(f=>{ h += `<tr class="${f.clase||''}"><td class="con">${f.etiqueta}${f.moneda==='USD'?'<span class="usd">USD</span>':''}</td>${PL.empresas.map(e=>cell(e,f)).join('')}</tr>`; });
-      h += `<tr class="sub"><td class="con">Subtotal ${r.nombre.toLowerCase()} $</td>${PL.empresas.map(e=>`<td class="num" data-sub="${r.nombre}" data-emp="${e.emp}"></td>`).join('')}</tr>`;
+      if (r.filas.some(f=>f.moneda==='$')) h += `<tr class="sub"><td class="con">Subtotal ${r.nombre.toLowerCase()} $</td>${PL.empresas.map(e=>`<td class="num" data-sub="${r.nombre}" data-emp="${e.emp}"></td>`).join('')}</tr>`;
     });
     h += `<tr class="tot"><td class="con">Total pesos</td>${PL.empresas.map(e=>`<td class="num" data-tot="$" data-emp="${e.emp}"></td>`).join('')}</tr>`;
     h += `<tr class="tot"><td class="con">Total dólares<span class="usd">USD</span></td>${PL.empresas.map(e=>`<td class="num" data-tot="USD" data-emp="${e.emp}"></td>`).join('')}</tr></table></div>`;
     $('#planilla').innerHTML = h; total();
     document.querySelectorAll('#planilla input').forEach(i=>i.addEventListener('input', total));
   }
+  window.textoWhatsApp = function(){
+    const fecha = $('#sFecha').value; const fd = s => s ? `${s.slice(8,10)}/${s.slice(5,7)}/${s.slice(0,4)}` : '';
+    const emps = [...document.querySelectorAll('#planilla th.emp')].map(th=>th.textContent.trim());
+    const porEmp = {}; const tot={}, totU={}; let grupo=0;
+    document.querySelectorAll('#planilla tr').forEach(tr=>{
+      if (tr.classList.contains('ramal')) { porEmp._ramal = tr.textContent.trim(); return; }
+      const con = tr.querySelector('td.con'); if(!con || tr.classList.contains('sub') || tr.classList.contains('tot')) return;
+      const et = con.childNodes[0].textContent.trim();
+      tr.querySelectorAll('input').forEach(i=>{ const v=num(i.value); if(!v) return; const e=i.dataset.emp; (porEmp[e] ||= []).push([porEmp._ramal, et, i.dataset.mon, v]); if(i.dataset.mon==='$'){ tot[e]=(tot[e]||0)+v; grupo+=v; } else totU[e]=(totU[e]||0)+v; });
+    });
+    let out = `*SALDOS DE LA MAÑANA · ${fd(fecha)}*\n`;
+    document.querySelectorAll('#planilla th.emp').forEach(th=>{
+      const e = th.className.replace('emp','').trim().toUpperCase(); const filas = porEmp[e]; if(!filas) return;
+      out += `\n*${th.textContent.trim().toUpperCase()}*\n`; let r0='';
+      filas.forEach(([r,et,mon,v])=>{ if(r!==r0){ out += `_${r}_\n`; r0=r; } out += `${et}: ${mon==='$'?'$':'USD'} ${fmt(v)}\n`; });
+      out += `*Total $: ${fmt(tot[e]||0)}*` + (totU[e] ? `  ·  *USD ${fmt(totU[e])}*` : '') + '\n';
+    });
+    out += `\n*TOTAL GRUPO $: ${fmt(grupo)}*`;
+    return out;
+  };
+  document.getElementById('btnCopiar').onclick = async ()=>{ const b=document.getElementById('btnCopiar'); try { await navigator.clipboard.writeText(textoWhatsApp()); b.textContent='✓ Copiado'; } catch(e){ b.textContent='No se pudo copiar'; } setTimeout(()=>b.textContent='📋 Copiar para WhatsApp', 2000); };
   $('#sFecha').addEventListener('change', cargarSaldos);
   function total(){
     const sub={}, tot={}, totU={}; let grupo=0;
