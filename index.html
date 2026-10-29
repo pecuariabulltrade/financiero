@@ -246,11 +246,11 @@
       });
       x.strokeStyle = '#D1D5DB'; x.beginPath(); x.moveTo(pad, y+2); x.lineTo(W-pad, y+2); x.stroke();
       x.fillStyle = '#1F2933'; x.font = 'bold 16px system-ui, Segoe UI, Arial'; x.fillText('Total ' + e.nombre, pad+14, y+26);
-      x.textAlign = 'right'; x.font = 'bold 16px ui-monospace, Consolas, monospace'; x.fillText('$ ' + fmt(e.tot) + (e.totU ? '   ·   USD ' + fmt(e.totU) : ''), W-pad-14, y+26); x.textAlign = 'left'; y += 46;
+      x.textAlign = 'right'; x.font = 'bold 16px ui-monospace, Consolas, monospace'; x.fillStyle = e.tot < 0 ? '#C0392B' : '#1F2933'; x.fillText('$ ' + fmt(e.tot) + (e.totU ? '   ·   USD ' + fmt(e.totU) : ''), W-pad-14, y+26); x.textAlign = 'left'; y += 46;
     });
     x.fillStyle = '#FFF7E6'; x.fillRect(pad, y, W-2*pad, 44); x.strokeStyle = '#E8C48A'; x.strokeRect(pad, y, W-2*pad, 44);
     x.fillStyle = '#1F2933'; x.font = 'bold 19px system-ui, Segoe UI, Arial'; x.fillText('TOTAL GRUPO (pesos)', pad+14, y+29);
-    x.textAlign = 'right'; x.font = 'bold 20px ui-monospace, Consolas, monospace'; x.fillText('$ ' + fmt(D.grupo), W-pad-14, y+29); x.textAlign = 'left';
+    x.textAlign = 'right'; x.font = 'bold 20px ui-monospace, Consolas, monospace'; x.fillStyle = D.grupo < 0 ? '#C0392B' : '#1F2933'; x.fillText('$ ' + fmt(D.grupo), W-pad-14, y+29); x.textAlign = 'left';
     return new Promise(res => c.toBlob(res, 'image/png'));
   };
   document.getElementById('btnCopiar').onclick = async ()=>{
