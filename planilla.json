@@ -33,15 +33,6 @@
      "clase": ""
     },
     {
-     "etiqueta": "Bco. Nación · Las Taperas",
-     "moneda": "$",
-     "destino": "Banco Las Taperas del Oeste",
-     "celdas": {
-      "DW": "taperas_bna"
-     },
-     "clase": ""
-    },
-    {
      "etiqueta": "Bco. Provincia Cba",
      "moneda": "$",
      "destino": "Banco Córdoba",
@@ -148,30 +139,13 @@
    "nombre": "Dólares Cta/Cte",
    "filas": [
     {
-     "etiqueta": "Dólares Cta/Cte BNA",
-     "moneda": "USD",
-     "destino": "usd",
-     "celdas": {
-      "DW": "usd_bna"
-     },
-     "clase": ""
-    },
-    {
-     "etiqueta": "Dólares Cta/Cte Galicia",
-     "moneda": "USD",
-     "destino": "usd",
-     "celdas": {
-      "BT": "usd_g",
-      "DW": "usd_galicia"
-     },
-     "clase": ""
-    },
-    {
      "etiqueta": "Dólares Cta/Cte",
      "moneda": "USD",
      "destino": "usd",
      "celdas": {
-      "PEG": "usd"
+      "PEG": "usd",
+      "BT": "usd",
+      "DW": "usd"
      },
      "clase": ""
     }
