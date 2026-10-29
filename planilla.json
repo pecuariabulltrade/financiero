@@ -2,7 +2,7 @@
  "empresas": [
   {
    "emp": "PEG",
-   "titulo": "Pecuaria"
+   "titulo": "Pecuaria El Garabí"
   },
   {
    "emp": "BT",
@@ -10,11 +10,15 @@
   },
   {
    "emp": "DW",
-   "titulo": "Darwash SA"
+   "titulo": "Darwash"
   },
   {
    "emp": "UN",
-   "titulo": "Darwash - Silvio Fernández UT"
+   "titulo": "UTE Darwash - S. Fernández"
+  },
+  {
+   "emp": "TAP",
+   "titulo": "Taperas del Oeste"
   }
  ],
  "ramales": [
@@ -28,7 +32,8 @@
      "celdas": {
       "PEG": "bna",
       "BT": "bna",
-      "DW": "bna"
+      "DW": "bna",
+      "TAP": "bna"
      },
      "clase": ""
     },
