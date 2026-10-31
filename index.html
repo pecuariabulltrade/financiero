@@ -63,7 +63,7 @@
       <label class="muted">Empresa</label><select id="emp"></select>
       <label class="muted">Publicación</label><select id="pub"></select>
       <span class="muted" id="pubInfo"></span>
-      <span id="genBox" class="hidden" style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button id="btnGenerar" style="background:#2F9E73" title="Le manda la orden a la PC de la oficina: genera el financiero de hoy y lo publica acá (tarda 1 a 3 minutos; el portal tiene que estar abierto en la PC)">⚡ Generar financiero</button><span class="sub" id="genInfo"></span></span>
+      <span id="genBox" class="hidden" style="margin-left:auto;gap:8px;align-items:center;flex-wrap:wrap"><button id="btnGenerar" style="background:#2F9E73" title="Le manda la orden a la PC de la oficina: genera el financiero de hoy y lo publica acá (tarda 1 a 3 minutos; el portal tiene que estar abierto en la PC)">⚡ Generar financiero</button><span class="sub" id="genInfo"></span></span>
     </div>
     <div id="dash"></div>
   </div>
@@ -114,7 +114,7 @@
     rol = (p && p.rol) || 'lector';
     $('#quien').textContent = (p && (p.nombre||p.email)) || session.user.email; $('#quien').textContent += ' · ' + rol;
     $('#nav').classList.remove('hidden'); $('#salir').classList.remove('hidden');
-    if (rol==='operadora' || rol==='admin') { $('#navSaldos').classList.remove('hidden'); $('#genBox').classList.remove('hidden'); }
+    if (rol==='operadora' || rol==='admin') { $('#navSaldos').classList.remove('hidden'); $('#genBox').classList.remove('hidden'); $('#genBox').style.display='flex'; }
     show('vDash'); await cargarDash();
   }
 
