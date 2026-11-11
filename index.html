@@ -6,7 +6,7 @@
 <title>Financiero · Grupo</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="config.js"></script>
 <style>
   :root{--bg:#F7F8FA;--surface:#FFF;--surface-2:#EEF1F5;--border:#E1E5EA;--border-2:#C9D0D8;--ink:#161B22;--text-2:#3F4854;--mutedc:#7B8794;
@@ -226,22 +226,38 @@
   }
 
   // ---------------- exportar el dashboard a Excel ----------------
-  $('#btnExcel').onclick = ()=>{
-    const DB = window.__DB; if (!DB || !window.XLSX) return;
-    const A = DB.activo || {};
-    const rows = [['Financiero ' + (C.EMPRESAS[empSel.value]||empSel.value), 'corte ' + fd(DB.corte)], [],
-      ['Activo corriente', A.total], ['Cola del financiero', A.cola], ['Dólares (USD ' + (A.usd||0) + ' × ' + (A.tc||0) + ')', A.usd_pesos], ['Cuenta adelantos', A.saldo_adelantos], ['Hacienda (' + (A.kg_total||0) + ' kg × ' + (A.precio_kg||0) + ')', A.hacienda], [],
-      ['Concepto', 'Código', 'Total'].concat(DB.cols)];
+  $('#btnExcel').onclick = async ()=>{
+    const DB = window.__DB; if (!DB || !window.ExcelJS) return;
+    const A = DB.activo || {}, n0 = v => new Intl.NumberFormat('es-AR',{maximumFractionDigits:0}).format(v||0);
+    const wb = new ExcelJS.Workbook(); const ws = wb.addWorksheet('Dashboard', {views:[{showGridLines:false}], properties:{outlineProperties:{summaryBelow:false}}});
+    const ncol = 3 + DB.cols.length, FMT = '#,##0.00;[Red]-#,##0.00';
+    const GRIS='FFD9D9D9', GRISC='FFF2F2F2', AZUL='FF1F4E8C', AMAR='FFFFF2CC';
+    const fila = (vals, o={})=>{ const r = ws.addRow(vals.concat(Array(Math.max(0,ncol-vals.length)).fill(null)));
+      for (let c=1;c<=ncol;c++){ const cell=r.getCell(c); cell.font={bold:!!o.b, color:{argb:o.color||'FF000000'}, size:o.tam||11};
+        if(o.fill) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:o.fill}};
+        if(o.borde) cell.border={top:{style:'thin',color:{argb:'FF808080'}},bottom:{style:'thin',color:{argb:'FF808080'}}};
+        if(typeof cell.value==='number') cell.numFmt=FMT; }
+      if(o.nivel){ r.outlineLevel=o.nivel; r.hidden=!!o.oculto; } return r; };
     const esOtros = d => d.otros || /^OTROS (DEUDORES|ACREEDORES) MENORES/.test(d.nombre);
-    DB.filas.forEach(fl=>{ rows.push([fl.nombre, '', fl.total].concat(fl.vec));
-      (fl.det||[]).slice().sort((a,b)=>esOtros(a)-esOtros(b)).forEach(d=>rows.push(['    ' + d.nombre, d.codigo||'', d.total].concat(d.vec))); });
-    rows.push(['Total semana', '', DB.total.reduce((a,b)=>a+b,0)].concat(DB.total)); rows.push(['Saldo acumulado', '', ''].concat(DB.acum));
-    if (DB.salvedades && DB.salvedades.length) { rows.push([]); rows.push(['Salvedades']); DB.salvedades.forEach(x=>rows.push([x])); }
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{wch:48},{wch:12},{wch:18}].concat(DB.cols.map(()=>({wch:17})));
-    Object.keys(ws).forEach(k=>{ if (k[0] !== '!' && typeof ws[k].v === 'number') ws[k].z = '#,##0.00;[Red]-#,##0.00'; });
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Dashboard');
-    XLSX.writeFile(wb, 'Financiero_' + empSel.value + '_' + DB.corte + '.xlsx');
+    const bloque = fl=>{ fila([fl.nombre.toUpperCase()+(fl.n?`  (${fl.n})`:''), '', fl.total].concat(fl.vec), {b:1, fill:GRIS, borde:1});
+      (fl.det||[]).slice().sort((a,b)=>esOtros(a)-esOtros(b)).forEach(d=>fila(['      '+d.nombre, d.codigo||'', d.total].concat(d.vec), {nivel:1, oculto:1, fill:esOtros(d)?GRISC:null})); };
+    fila(['FINANCIERO · '+(C.EMPRESAS[empSel.value]||empSel.value)], {b:1, tam:14}); fila(['Corte '+fd(DB.corte)]); fila([]);
+    fila(['ACTIVO CORRIENTE','',A.total], {b:1, fill:GRIS, borde:1});
+    [['Cola del financiero (acumulado final)',A.cola],[`Dólares: USD ${n0(A.usd)} × TC ${fmt(A.tc||0)}`,A.usd_pesos],[`Cuenta ${A.cuenta_adelantos||''} adelantos`,A.saldo_adelantos],[`Hacienda: ${n0(A.kg_total)} kg × $ ${fmt(A.precio_kg||0)}`,A.hacienda]].forEach(x=>fila(['      '+x[0],'',x[1]],{nivel:1}));
+    if (A.extras_total) fila(['      Otros','',A.extras_total],{nivel:1});
+    fila([]);
+    const cab = fila(['CONCEPTO','CÓDIGO','TOTAL'].concat(DB.cols.map(c=>String(c).toUpperCase())), {b:1, fill:AZUL, color:'FFFFFFFF'});
+    for (let c=3;c<=ncol;c++) cab.getCell(c).alignment={horizontal:'right'};
+    DB.filas.filter(f=>f.nombre.startsWith('Disponibilidades')).forEach(bloque);
+    fila(['SALDO ACUMULADO','',null].concat(DB.acum), {b:1, fill:AMAR, borde:1});
+    fila(['TOTAL DE LA SEMANA','',DB.total.reduce((a,b)=>a+b,0)].concat(DB.total), {b:1, fill:AMAR, borde:1});
+    fila([]);
+    DB.filas.filter(f=>!f.nombre.startsWith('Disponibilidades')).forEach(bloque);
+    if (DB.salvedades && DB.salvedades.length) { fila([]); fila(['SALVEDADES'],{b:1, fill:GRIS}); DB.salvedades.forEach(x=>fila([x])); }
+    ws.getColumn(1).width=52; ws.getColumn(2).width=12; for (let c=3;c<=ncol;c++) ws.getColumn(c).width=19;
+    ws.views=[{state:'frozen', xSplit:3, ySplit:cab.number, showGridLines:false}];
+    const buf = await wb.xlsx.writeBuffer(); const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})); a.download='Financiero_'+empSel.value+'_'+DB.corte+'.xlsx'; a.click();
   };
 
   // ---------------- saldos de la mañana (operadora / admin) ----------------
