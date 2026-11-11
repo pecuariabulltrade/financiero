@@ -6,6 +6,7 @@
 <title>Financiero · Grupo</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="config.js"></script>
 <style>
   :root{--bg:#F7F8FA;--surface:#FFF;--surface-2:#EEF1F5;--border:#E1E5EA;--border-2:#C9D0D8;--ink:#161B22;--text-2:#3F4854;--mutedc:#7B8794;
@@ -36,7 +37,7 @@
   table.dash tr.cat-ing td:first-child{border-left:5px solid var(--verde)} table.dash tr.cat-egr td:first-child{border-left:5px solid var(--rojo)} table.dash tr.cat-disp td:first-child{border-left:5px solid var(--accent)} table.dash tr.cat-mix td:first-child{border-left:5px solid var(--ambar)}
   table.dash tr.det td{font-size:13px} table.dash tr.det td:first-child{padding-left:26px}
   table.dash tr.tot td{border-top:3px double var(--border-2);font-size:16px;font-weight:700} table.dash tr.acum td{background:var(--accent-soft);font-size:17px;font-weight:700}
-  td.sem.neg{color:var(--rojo)} td.sem.pos{color:var(--verde)}
+  td.sem.neg{color:var(--rojo)} td.sem.pos{color:var(--verde)} tr.det-otros td{background:#EEF2F7 !important;font-style:italic} td.kpi.negd{color:#C0392B}
   .mx{border-collapse:collapse;width:auto} .mx th,.mx td{padding:3px 6px;border-bottom:1px solid var(--border)} .mx th{font-size:12px;text-align:center;white-space:nowrap} .mx th.emp{min-width:150px;padding:8px 6px;font-size:13px} .mx td.con{white-space:nowrap;font-size:13px;min-width:200px} .mx td input{width:100%;text-align:right;font-family:ui-monospace,Consolas,monospace;height:32px;font-size:14px} .mx td.na{background:#F3F4F6;text-align:center;color:#C4C8CE} .mx tr.ramal td{background:#EEF1F5;font-weight:700;font-size:12px;letter-spacing:.3px;text-transform:uppercase;padding:7px 6px} .mx tr.sub td{font-size:12px;color:var(--mutedc);background:#FAFBFC} .mx tr.tot td{font-weight:700;font-size:14px;background:#FFF7E6} .mx th.peg{background:#E7F0FB} .mx th.bt{background:#E6F4EC} .mx th.dw{background:#EEF1F5} .mx th.un{background:#FBEBE0} .mx th.tap{background:#F3E8FB} .mx tr.tarjeta td{background:#FFF4E5} .mx tr.tarjeta td.con{color:#9A5B00;font-weight:600} .mx tr.tarjeta td input{background:#FFFBF3;border-color:#E8C48A} .salv{background:#FFF7E6;border:1px solid #E8C48A;border-radius:8px;padding:10px 14px;margin:0 0 12px;font-size:13px} .salv b{color:#9A5B00} .salv ul{margin:4px 0 0 18px;padding:0} .salv li{margin:2px 0} .dot-aviso{display:inline-block;width:11px;height:11px;border-radius:50%;background:#C0392B;margin-right:7px;vertical-align:middle;cursor:pointer;box-shadow:0 0 0 2px #fff,0 0 0 3px #C0392B55} .avisos-cart{background:#FFF7E6;border:1px solid #E8C48A;font-size:13px} .avisos-cart ul{margin:4px 0 8px 18px;padding:0} .avisos-cart table{width:100%;border-collapse:collapse;font-size:12px;background:#fff} .avisos-cart th,.avisos-cart td{padding:4px 6px;border-bottom:1px solid #EADBC2;text-align:left;white-space:nowrap} .avisos-cart td.num,.avisos-cart th.num{text-align:right;font-family:ui-monospace,Consolas,monospace} .avisos-cart .no{color:#C0392B;font-weight:600} .avisos-cart .si{color:#2F9E73;font-weight:600} .avisos-gen{border-radius:8px;padding:10px 14px;margin:0 0 12px;font-size:13px;background:#F3F4F6;border:1px solid #D1D5DB} .avisos-gen ul{margin:4px 0 0 0;padding:0;list-style:none} .avisos-gen li{margin:3px 0;padding-left:20px;position:relative} .avisos-gen li:before{content:'';position:absolute;left:4px;top:5px;width:9px;height:9px;border-radius:50%;background:#9CA3AF} .avisos-gen li.error:before{background:#C0392B} .avisos-gen li.aviso:before{background:#D97706} .avisos-gen li.ok:before{background:#2F9E73} .avisos-gen li.error{color:#7F1D1D;font-weight:600} .avisos-gen.con-error{background:#FEF2F2;border-color:#FCA5A5} .usd{font-size:10px;color:var(--mutedc);margin-left:4px} .wrapmx{overflow-x:auto}
   .peg h3{background:#E7F0FB} .bt h3{background:#E6F4EC} .dw h3{background:#EEF1F5} .un h3{background:#FBEBE0}
   .hidden{display:none}
@@ -63,6 +64,7 @@
       <label class="muted">Empresa</label><select id="emp"></select>
       <label class="muted">Publicación</label><select id="pub"></select>
       <span class="muted" id="pubInfo"></span>
+      <button id="btnExcel" style="background:#1F4E8C" title="Descarga el dashboard que estás viendo, con el detalle de cada fila, en Excel">⬇ Excel</button>
       <span id="genBox" class="hidden" style="margin-left:auto;gap:8px;align-items:center;flex-wrap:wrap"><button id="btnGenerar" style="background:#2F9E73" title="Le manda la orden a la PC de la oficina: genera el financiero de hoy y lo publica acá (tarda 1 a 3 minutos; el portal tiene que estar abierto en la PC)">⚡ Generar financiero</button><span class="sub" id="genInfo"></span></span>
     </div>
     <div id="dash"></div>
@@ -162,6 +164,7 @@
     const {data,error} = await sb.from('financiero_publicado').select('*').eq('id', id).single();
     if (error) { $('#dash').innerHTML='<div class="err">'+error.message+'</div>'; return; }
     const DB = data.datos.DB, SEM = data.datos.semanas||[];
+    window.__DB = DB;
     $('#pubInfo').textContent = 'corte '+fd(DB.corte)+' · publicado '+fd(data.publicado_el.slice(0,10))+' '+data.publicado_el.slice(11,16);
     render(DB, SEM);
   }
@@ -189,7 +192,10 @@
       const conAviso = fl.nombre === 'Cheques en cartera' && DB.salvedades && DB.salvedades.length;
       const conAvisoD = fl.nombre.startsWith('Disponibilidades') && DB.disp_avisos && DB.disp_avisos.length;
       h += `<tr class="fila ${cats[k]||'cat-mix'}" onclick="document.querySelectorAll('tr.d${k}').forEach(r=>r.style.display=r.style.display==='none'?'':'none')"><td>${conAvisoD ? `<span class="dot-aviso" title="hay avisos de disponibilidades: tocá para verlos" onclick="event.stopPropagation();var e=document.getElementById('avisosDisp');var on=e.style.display==='none';e.style.display=on?'':'none';if(on)e.scrollIntoView({behavior:'smooth',block:'start'})"></span>` : ''}${conAviso ? `<span class="dot-aviso" title="hay avisos de cartera: tocá para verlos" onclick="event.stopPropagation();var e=document.getElementById('avisosCart');var on=e.style.display==='none';e.style.display=on?'':'none';if(on)e.scrollIntoView({behavior:'smooth',block:'start'})"></span>` : ''}<b>${fl.nombre}</b>${fl.det&&fl.det.length?` <span class="sub">${fl.n} ▸</span>`:(fl.nota?` <span class="sub">${fl.nota}</span>`:'')}</td><td class="num kpi ${cls(fl.total)}">${fmt(fl.total)}</td>${fl.vec.map(v=>`<td class="num sem kpi ${v<0?'neg':v>0?'pos':''}">${v?fmt(v):''}</td>`).join('')}</tr>`;
-      (fl.det||[]).forEach(d=>{ h += `<tr class="det d${k}" style="display:none"><td>${d.nombre}${d.codigo?' <code>'+d.codigo+'</code>':''}</td><td class="num kpi">${fmt(d.total)}</td>${d.vec.map(v=>`<td class="num sem kpi">${v?fmt(v):''}</td>`).join('')}</tr>`; });
+      const cli = fl.nombre.startsWith('Saldos de clientes');
+      const esOtros = d => d.otros || /^OTROS (DEUDORES|ACREEDORES) MENORES/.test(d.nombre);
+      const dets = (fl.det||[]).slice().sort((a,b)=>esOtros(a)-esOtros(b));
+      dets.forEach(d=>{ h += `<tr class="det d${k}${esOtros(d)?' det-otros':''}" style="display:none"><td>${d.nombre}${d.codigo?' <code>'+d.codigo+'</code>':''}</td><td class="num kpi${cli&&d.total<0?' negd':''}">${fmt(d.total)}</td>${d.vec.map(v=>`<td class="num sem kpi${cli&&v<0?' negd':''}">${v?fmt(v):''}</td>`).join('')}</tr>`; });
     });
     const totS = DB.total.reduce((a,b)=>a+b,0);
     h += `<tr class="tot"><td>Total semana</td><td class="num kpi">${fmt(totS)}</td>${DB.total.map(v=>`<td class="num sem kpi ${v<0?'neg':v>0?'pos':''}">${fmt(v)}</td>`).join('')}</tr>
@@ -218,6 +224,25 @@
     charts.push(new Chart($('#torta'), {type:'doughnut', data:{labels, datasets:[{data:data.map(v=>Math.max(v,0)), backgroundColor:['#1F4E8C','#2F9E73','#B8881F','#C0392B','#7B8794'], borderWidth:1}]}, options:{plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>' $ '+fmt0(data[c.dataIndex])}}},cutout:'55%'}}));
     charts.push(new Chart($('#grafico'), {data:{labels:DB.cols, datasets:[{type:'bar',label:'Movimiento de la semana',data:DB.total,backgroundColor:DB.total.map(v=>v<0?'rgba(192,57,43,.55)':'rgba(47,158,115,.6)'),order:2},{type:'line',label:'Saldo acumulado',data:DB.acum,borderColor:'#1F4E8C',backgroundColor:'#1F4E8C',tension:.25,pointRadius:4,order:1}]}, options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{y:{ticks:{callback:v=>'$ '+fmt0(v)}}},plugins:{tooltip:{callbacks:{label:c=>' '+c.dataset.label+': $ '+fmt0(c.raw)}}}}}));
   }
+
+  // ---------------- exportar el dashboard a Excel ----------------
+  $('#btnExcel').onclick = ()=>{
+    const DB = window.__DB; if (!DB || !window.XLSX) return;
+    const A = DB.activo || {};
+    const rows = [['Financiero ' + (C.EMPRESAS[empSel.value]||empSel.value), 'corte ' + fd(DB.corte)], [],
+      ['Activo corriente', A.total], ['Cola del financiero', A.cola], ['Dólares (USD ' + (A.usd||0) + ' × ' + (A.tc||0) + ')', A.usd_pesos], ['Cuenta adelantos', A.saldo_adelantos], ['Hacienda (' + (A.kg_total||0) + ' kg × ' + (A.precio_kg||0) + ')', A.hacienda], [],
+      ['Concepto', 'Código', 'Total'].concat(DB.cols)];
+    const esOtros = d => d.otros || /^OTROS (DEUDORES|ACREEDORES) MENORES/.test(d.nombre);
+    DB.filas.forEach(fl=>{ rows.push([fl.nombre, '', fl.total].concat(fl.vec));
+      (fl.det||[]).slice().sort((a,b)=>esOtros(a)-esOtros(b)).forEach(d=>rows.push(['    ' + d.nombre, d.codigo||'', d.total].concat(d.vec))); });
+    rows.push(['Total semana', '', DB.total.reduce((a,b)=>a+b,0)].concat(DB.total)); rows.push(['Saldo acumulado', '', ''].concat(DB.acum));
+    if (DB.salvedades && DB.salvedades.length) { rows.push([]); rows.push(['Salvedades']); DB.salvedades.forEach(x=>rows.push([x])); }
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:48},{wch:12},{wch:18}].concat(DB.cols.map(()=>({wch:17})));
+    Object.keys(ws).forEach(k=>{ if (k[0] !== '!' && typeof ws[k].v === 'number') ws[k].z = '#,##0.00;[Red]-#,##0.00'; });
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Dashboard');
+    XLSX.writeFile(wb, 'Financiero_' + empSel.value + '_' + DB.corte + '.xlsx');
+  };
 
   // ---------------- saldos de la mañana (operadora / admin) ----------------
   async function cargarSaldos(){
