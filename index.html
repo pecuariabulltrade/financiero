@@ -55,6 +55,7 @@
   <div id="vLogin" class="card login">
     <h2>Ingresar</h2>
     <div id="loginErr" class="err hidden"></div>
+    <label class="muted">Empresa</label><select id="lEmp"></select>
     <label class="muted">Email</label><input id="email" type="email" autocomplete="username">
     <label class="muted">Contraseña</label><input id="pass" type="password" autocomplete="current-password">
     <button id="btnLogin">Entrar</button>
@@ -114,6 +115,10 @@
     if (error) { $('#loginErr').textContent='No se pudo entrar: '+error.message; $('#loginErr').classList.remove('hidden'); return; }
     await sesion();
   }
+  Object.entries(C.EMPRESAS).forEach(([k,v])=>{ const o=document.createElement('option'); o.value=k; o.textContent=v; $('#lEmp').appendChild(o); });
+  try { const g = localStorage.getItem('fin_emp'); if (g && C.EMPRESAS[g]) $('#lEmp').value = g; } catch(e) {}
+  function elegirEmpresa(k){ if (!C.EMPRESAS[k]) return; try { localStorage.setItem('fin_emp', k); } catch(e) {}
+    ['emp','eEmp','lEmp'].forEach(id=>{ const el=document.getElementById(id); if (el) el.value = k; }); }
   $('#btnLogin').onclick = entrar; $('#pass').addEventListener('keydown', e=>{ if(e.key==='Enter') entrar(); });
   $('#salir').onclick = async ()=>{ await sb.auth.signOut(); location.reload(); };
 
@@ -125,6 +130,7 @@
     $('#quien').textContent = (p && (p.nombre||p.email)) || session.user.email; $('#quien').textContent += ' · ' + rol;
     $('#nav').classList.remove('hidden'); $('#salir').classList.remove('hidden');
     if (rol==='operadora' || rol==='admin') { $('#navSaldos').classList.remove('hidden'); $('#genBox').classList.remove('hidden'); $('#genBox').style.display='flex'; }
+    elegirEmpresa($('#lEmp').value);
     show('vDash'); await cargarDash();
   }
 
@@ -157,7 +163,7 @@
   // ---------------- dashboard ----------------
   const empSel = $('#emp'), pubSel = $('#pub');
   Object.entries(C.EMPRESAS).forEach(([k,v])=>{ const o=document.createElement('option'); o.value=k; o.textContent=v; empSel.appendChild(o); });
-  empSel.onchange = cargarDash; pubSel.onchange = ()=>mostrar(pubSel.value);
+  empSel.onchange = ()=>{ elegirEmpresa(empSel.value); cargarDash(); }; pubSel.onchange = ()=>mostrar(pubSel.value);
   let pubs = [];
   async function cargarDash(){
     $('#dash').innerHTML = '<div class="card muted">Cargando…</div>';
@@ -181,6 +187,7 @@
     charts.forEach(c=>c.destroy()); charts=[];
     const A = DB.activo, comp = DB.comp||{};
     const cats = ['cat-disp','cat-egr','cat-ing','cat-ing','cat-egr','cat-mix','cat-egr','cat-mix'];
+    const catDe = (nom, k) => /^Disponib/.test(nom) ? 'cat-disp' : /emitidos|acreedores|^Pago|^Vencimientos de|^Egresos|^Gastos/.test(nom) ? 'cat-egr' : /cartera|deudores|^Ingresos/.test(nom) ? 'cat-ing' : 'cat-mix';
     let h = (DB.avisos && DB.avisos.length) ? `<div class="avisos-gen${DB.avisos.some(a=>a.nivel==='error')?' con-error':''}"><b>Estado de la generación</b>${DB.generado?` <span class="muted">· ${fd(DB.generado.el.slice(0,10))} ${DB.generado.el.slice(11,16)}${DB.generado.por?' · '+DB.generado.por:''}</span>`:''}<ul>${DB.avisos.map(a=>`<li class="${a.nivel}">${a.texto}</li>`).join('')}</ul></div>` : '';
     h += `<div class="card" style="border:2px solid var(--accent)"><div class="hero"><div>
       <div class="muted" style="text-transform:uppercase;letter-spacing:1px">Activo corriente · corte ${fd(DB.corte)}</div>
@@ -189,8 +196,8 @@
       <div class="comp" style="margin-top:10px"><table>
         <tr><td><span class="dot" style="background:#1F4E8C"></span>Cola del financiero</td><td class="kpi">${fmt(A.cola)}</td></tr>
         <tr><td><span class="dot" style="background:#2F9E73"></span>Dólares USD ${fmt0(A.usd)} × ${fmt(A.tc)}</td><td class="kpi">${fmt(A.usd_pesos)}</td></tr>
-        <tr><td><span class="dot" style="background:#B8881F"></span>Cuenta ${A.cuenta_adelantos} adelantos</td><td class="kpi">${fmt(A.saldo_adelantos)}</td></tr>
-        <tr><td><span class="dot" style="background:#C0392B"></span>Hacienda ${fmt0(A.kg_total)} kg × $ ${fmt(A.precio_kg)}</td><td class="kpi">${fmt(A.hacienda)}</td></tr>
+        ${A.sin_hacienda ? '' : `<tr><td><span class="dot" style="background:#B8881F"></span>Cuenta ${A.cuenta_adelantos} adelantos</td><td class="kpi">${fmt(A.saldo_adelantos)}</td></tr>
+        <tr><td><span class="dot" style="background:#C0392B"></span>Hacienda ${fmt0(A.kg_total)} kg × $ ${fmt(A.precio_kg)}</td><td class="kpi">${fmt(A.hacienda)}</td></tr>`}
         ${(A.extras||[]).map(e=>`<tr><td><span class="dot" style="background:#7B8794"></span>${e.detalle}</td><td class="kpi">${fmt(e.monto)}</td></tr>`).join('')}
         <tr><td><b>Activo corriente</b></td><td class="kpi"><b>${fmt(A.total)}</b></td></tr></table></div></div>
       <div><canvas id="torta" style="max-height:300px"></canvas></div></div></div>`;
@@ -199,7 +206,7 @@
     DB.filas.forEach((fl,k)=>{
       const conAviso = fl.nombre === 'Cheques en cartera' && DB.salvedades && DB.salvedades.length;
       const conAvisoD = fl.nombre.startsWith('Disponibilidades') && DB.disp_avisos && DB.disp_avisos.length;
-      h += `<tr class="fila ${cats[k]||'cat-mix'}" onclick="document.querySelectorAll('tr.d${k}').forEach(r=>r.style.display=r.style.display==='none'?'':'none')"><td>${conAvisoD ? `<span class="dot-aviso" title="hay avisos de disponibilidades: tocá para verlos" onclick="event.stopPropagation();var e=document.getElementById('avisosDisp');var on=e.style.display==='none';e.style.display=on?'':'none';if(on)e.scrollIntoView({behavior:'smooth',block:'start'})"></span>` : ''}${conAviso ? `<span class="dot-aviso" title="hay avisos de cartera: tocá para verlos" onclick="event.stopPropagation();var e=document.getElementById('avisosCart');var on=e.style.display==='none';e.style.display=on?'':'none';if(on)e.scrollIntoView({behavior:'smooth',block:'start'})"></span>` : ''}<b>${fl.nombre}</b>${fl.det&&fl.det.length?` <span class="sub">${fl.n} ▸</span>`:(fl.nota?` <span class="sub">${fl.nota}</span>`:'')}</td><td class="num kpi ${cls(fl.total)}">${fmt(fl.total)}</td>${fl.vec.map(v=>`<td class="num sem kpi ${v<0?'neg':v>0?'pos':''}">${v?fmt(v):''}</td>`).join('')}</tr>`;
+      h += `<tr class="fila ${catDe(fl.nombre, k)}" onclick="document.querySelectorAll('tr.d${k}').forEach(r=>r.style.display=r.style.display==='none'?'':'none')"><td>${conAvisoD ? `<span class="dot-aviso" title="hay avisos de disponibilidades: tocá para verlos" onclick="event.stopPropagation();var e=document.getElementById('avisosDisp');var on=e.style.display==='none';e.style.display=on?'':'none';if(on)e.scrollIntoView({behavior:'smooth',block:'start'})"></span>` : ''}${conAviso ? `<span class="dot-aviso" title="hay avisos de cartera: tocá para verlos" onclick="event.stopPropagation();var e=document.getElementById('avisosCart');var on=e.style.display==='none';e.style.display=on?'':'none';if(on)e.scrollIntoView({behavior:'smooth',block:'start'})"></span>` : ''}<b>${fl.nombre}</b>${fl.det&&fl.det.length?` <span class="sub">${fl.n} ▸</span>`:(fl.nota?` <span class="sub">${fl.nota}</span>`:'')}</td><td class="num kpi ${cls(fl.total)}">${fmt(fl.total)}</td>${fl.vec.map(v=>`<td class="num sem kpi ${v<0?'neg':v>0?'pos':''}">${v?fmt(v):''}</td>`).join('')}</tr>`;
       const cli = fl.nombre.startsWith('Saldos de clientes');
       const esOtros = d => d.otros || /^OTROS (DEUDORES|ACREEDORES) MENORES/.test(d.nombre);
       const dets = (fl.det||[]).slice().sort((a,b)=>esOtros(a)-esOtros(b));
@@ -235,7 +242,7 @@
 
   // ---------------- evolución diaria del activo corriente ----------------
   const eEmp = $('#eEmp'); Object.entries(C.EMPRESAS).forEach(([k,v])=>{ const o=document.createElement('option'); o.value=k; o.textContent=v; eEmp.appendChild(o); });
-  eEmp.onchange = cargarEvol; $('#eDias').onchange = cargarEvol;
+  eEmp.onchange = ()=>{ elegirEmpresa(eEmp.value); cargarEvol(); }; $('#eDias').onchange = cargarEvol;
   let chartsE = [];
   async function cargarEvol(){
     const dias = +$('#eDias').value; const desde = new Date(Date.now()-dias*864e5).toISOString().slice(0,10);
@@ -282,7 +289,7 @@
       options:{responsive:true, interaction:{mode:'index',intersect:false}, scales:{y:{position:'left', ticks:{callback:tick}}, y2:{position:'right', grid:{drawOnChartArea:false}, ticks:{callback:tick}}}, plugins:{tooltip:{callbacks:{label:c=>' '+c.dataset.label+': $ '+fmt0(c.raw)}}}}}));
     chartsE.push(new Chart($('#gComp'), {type:'bar', data:{labels:lab, datasets:[
       {label:'Cola del financiero', data:S.map(x=>x.cola), backgroundColor:'#1F4E8C'}, {label:'Dólares', data:S.map(x=>x.usd), backgroundColor:'#2F9E73'},
-      {label:'Adelantos', data:S.map(x=>x.adel), backgroundColor:'#B8881F'}, {label:'Hacienda', data:S.map(x=>x.hac), backgroundColor:'#C0392B'}].concat(S.some(x=>x.otros)?[{label:'Otros', data:S.map(x=>x.otros), backgroundColor:'#7B8794'}]:[])},
+      {label:'Adelantos', data:S.map(x=>x.adel), backgroundColor:'#B8881F'}, {label:'Hacienda', data:S.map(x=>x.hac), backgroundColor:'#C0392B'}].concat(S.some(x=>x.otros)?[{label:'Inversiones / otros', data:S.map(x=>x.otros), backgroundColor:'#7B8794'}]:[])},
       options:{responsive:true, interaction:{mode:'index',intersect:false}, scales:{x:{stacked:true}, y:{stacked:true, ticks:{callback:tick}}}, plugins:{tooltip:{callbacks:{label:c=>' '+c.dataset.label+': $ '+fmt0(c.raw)}}}}}));
   }
 
@@ -304,8 +311,7 @@
       (fl.det||[]).slice().sort((a,b)=>esOtros(a)-esOtros(b)).forEach(d=>fila(['      '+d.nombre, d.codigo||'', d.total].concat(d.vec), {nivel:1, oculto:1, fill:esOtros(d)?GRISC:null})); };
     fila(['FINANCIERO · '+(C.EMPRESAS[empSel.value]||empSel.value)], {b:1, tam:14}); fila(['Corte '+fd(DB.corte)]); fila([]);
     fila(['ACTIVO CORRIENTE','',A.total], {b:1, fill:GRIS, borde:1});
-    [['Cola del financiero (acumulado final)',A.cola],[`Dólares: USD ${n0(A.usd)} × TC ${fmt(A.tc||0)}`,A.usd_pesos],[`Cuenta ${A.cuenta_adelantos||''} adelantos`,A.saldo_adelantos],[`Hacienda: ${n0(A.kg_total)} kg × $ ${fmt(A.precio_kg||0)}`,A.hacienda]].forEach(x=>fila(['      '+x[0],'',x[1]],{nivel:1}));
-    if (A.extras_total) fila(['      Otros','',A.extras_total],{nivel:1});
+    [['Cola del financiero (acumulado final)',A.cola],[`Dólares: USD ${n0(A.usd)} × TC ${fmt(A.tc||0)}`,A.usd_pesos],].concat(A.sin_hacienda ? [] : [[`Cuenta ${A.cuenta_adelantos||''} adelantos`,A.saldo_adelantos],[`Hacienda: ${n0(A.kg_total)} kg × $ ${fmt(A.precio_kg||0)}`,A.hacienda]]).concat((A.extras||[]).map(e=>[e.detalle,e.monto])).forEach(x=>fila(['      '+x[0],'',x[1]],{nivel:1}));
     fila([]);
     const cab = fila(['CONCEPTO','CÓDIGO','TOTAL'].concat(DB.cols.map(c=>String(c).toUpperCase())), {b:1, fill:AZUL, color:'FFFFFFFF'});
     for (let c=3;c<=ncol;c++) cab.getCell(c).alignment={horizontal:'right'};
