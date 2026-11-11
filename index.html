@@ -66,7 +66,7 @@
       <label class="muted">Publicación</label><select id="pub"></select>
       <span class="muted" id="pubInfo"></span>
       <button id="btnExcel" style="background:#1F4E8C" title="Descarga el dashboard que estás viendo, con el detalle de cada fila, en Excel">⬇ Excel</button>
-      <span id="genBox" class="hidden" style="margin-left:auto;gap:8px;align-items:center;flex-wrap:wrap"><button id="btnGenerar" style="background:#2F9E73" title="Le manda la orden a la PC de la oficina: genera el financiero de hoy y lo publica acá (tarda 1 a 3 minutos; el portal tiene que estar abierto en la PC)">⚡ Generar financiero</button><span class="sub" id="genInfo"></span></span>
+      <span id="genBox" class="hidden" style="margin-left:auto;gap:8px;align-items:center;flex-wrap:wrap"><button id="btnGenerar" style="background:#2F9E73" title="Le manda la orden a la PC de la oficina: genera el financiero de hoy y lo publica acá (Darwash tarda unos 5 minutos y Bulltrade – Pecuaria unos 10; el portal tiene que estar abierto en la PC)">⚡ Generar financiero</button><span class="sub" id="genInfo"></span></span>
     </div>
     <div id="dash"></div>
   </div>
@@ -156,7 +156,7 @@
       if (o.estado === 'pendiente') info.textContent = `Esperando que la PC tome la orden (${seg} s)… el portal tiene que estar abierto en la oficina.`;
       else if (o.estado === 'en_curso') info.textContent = `Generando en la PC (${seg} s)…`;
       else { clearInterval(genTimer); b.disabled = false; info.textContent = (o.estado === 'hecho' ? '✓ Publicado: ' : '✗ Error: ') + (o.resultado||''); if (o.estado === 'hecho') cargarDash(); }
-      if (seg > 600) { clearInterval(genTimer); b.disabled = false; info.textContent = 'Sin respuesta de la PC en 10 minutos: ¿está prendida y con el portal abierto?'; }
+      if (seg > 1500) { clearInterval(genTimer); b.disabled = false; info.textContent = 'Sin respuesta de la PC en 25 minutos: ¿está prendida y con el portal abierto?'; }
     }, 5000);
   };
 
