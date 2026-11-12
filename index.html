@@ -35,6 +35,11 @@
   table.dash td.sem,table.dash th.sem{background:var(--surface-2);font-size:13px}
   table.dash tr.fila td{border-top:2px solid var(--border-2);background:var(--surface-2);font-weight:600;cursor:pointer} table.dash tr.fila td:first-child b{color:var(--accent);font-size:15px}
   table.dash tr.cat-ing td:first-child{border-left:5px solid var(--verde)} table.dash tr.cat-egr td:first-child{border-left:5px solid var(--rojo)} table.dash tr.cat-disp td:first-child{border-left:5px solid var(--accent)} table.dash tr.cat-mix td:first-child{border-left:5px solid var(--ambar)}
+  /* Nico 12/11: línea entre Total y Vencido/hoy · fila de fechas fija al bajar */
+  table.dash th.sem:nth-child(3),table.dash td.sem:nth-child(3){border-left:3px solid #5B6777}
+  .dash-fija{max-height:calc(100vh - 110px);overflow:auto}
+  .dash-fija table.dash th{top:0;z-index:3;box-shadow:0 2px 0 var(--border-2)}
+  .dash-fija table.dash th:first-child{z-index:4}
   table.dash tr.det td{font-size:13px} table.dash tr.det td:first-child{padding-left:26px}
   table.dash tr.tot td{border-top:3px double var(--border-2);font-size:16px;font-weight:700} table.dash tr.acum td{background:var(--accent-soft);font-size:17px;font-weight:700}
   td.sem.neg{color:var(--rojo)} td.sem.pos{color:var(--verde)} tr.det-otros td{background:#EEF2F7 !important;font-style:italic} td.kpi.negd{color:#C0392B}
@@ -201,7 +206,7 @@
         ${(A.extras||[]).map(e=>`<tr><td><span class="dot" style="background:#7B8794"></span>${e.detalle}</td><td class="kpi">${fmt(e.monto)}</td></tr>`).join('')}
         <tr><td><b>Activo corriente</b></td><td class="kpi"><b>${fmt(A.total)}</b></td></tr></table></div></div>
       <div><canvas id="torta" style="max-height:300px"></canvas></div></div></div>`;
-    h += `<div class="card"><h2>Saldo acumulado por semana <span class="sub">· tocá una columna para el día a día, una fila para el detalle</span></h2><div class="wrap"><table class="dash">
+    h += `<div class="card"><h2>Saldo acumulado por semana <span class="sub">· tocá una columna para el día a día, una fila para el detalle</span></h2><div class="wrap dash-fija"><table class="dash">
       <tr><th>Concepto</th><th class="num">Total</th>${DB.cols.map((c,i)=>`<th class="num sem"><a onclick="abrirSemana(${i})" style="color:var(--accent);cursor:pointer">${c} ▸</a></th>`).join('')}</tr>`;
     DB.filas.forEach((fl,k)=>{
       const conAviso = fl.nombre === 'Cheques en cartera' && DB.salvedades && DB.salvedades.length;
